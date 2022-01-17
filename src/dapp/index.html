@@ -19,13 +19,138 @@
         </button>
     </nav>
 
-    <main class="container">
+    <div class="hero">
+        <h2>PANEL CONTROL</h2>
+    </div>
 
-        <div id="display-wrapper" class="top-20">
+    <main>
+
+        <div class="container">
+            <h3>Operational Status</h3>
+            <div id="display-wrapper-operational" class="display-wrapper"></div>
+            <div class="row justify-content-end">
+                <div class="col-lg-4">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <btn class="btn btn-info" id="get-operational-status">Get Operational Status</btn>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <btn class="btn btn-warning" id="disable-app-contract">Disable App Contract</btn>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <btn class="btn btn-success" id="enable-app-contract">Enable App Contract</btn>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <btn class="btn btn-warning" id="disable-data-contract">Disable Data Contract</btn>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <btn class="btn btn-success" id="enable-data-contract">Enable Data Contract</btn>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+
+        <div class="container">
+        <h3>Oracles</h3>
+            <div class="row justify-content-end">
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+                    </div>
+                </div>
+            </div>
+            <div id="display-wrapper-oracles" class="display-wrapper"></div>
         </div>
+
+        <div class="container">
+            <h3>Airlines</h3>
+            <div class="row justify-content-end">
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="submit-airline-input"> <btn class="btn btn-primary" id="submit-airline">Submit Airline</btn>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="vote-airline-input"> <btn class="btn btn-primary" id="vote-airline">Vote Airline</btn>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="register-airline-input"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="get-airline-status-input"> <btn class="btn btn-primary" id="get-airline-status">Get Airline Status</btn>
+                    </div>
+                </div>
+            </div>
+            <div id="display-wrapper-airlines" class="display-wrapper"></div>
+        </div>
+
+        <div class="container">
+            <h3>Passengers</h3>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+
+                    </div>
+
+                    <div class="row top-20 d-flex justify-content-center">
+
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="register-flight-input"> <btn class="btn btn-primary" id="register-flight">Register Flight</btn>
+                    </div>
+
+                    <div class="row top-20 d-flex justify-content-center">
+                        <input type="text" id="process-flight-status-input"> <btn class="btn btn-primary" id="process-flight-status">Process Flight status</btn>
+                    </div>
+                </div>
+            </div>
+            <div id="display-wrapper-passengers" class="display-wrapper"></div>
+        </div>
+
+        <div class="container">
+            <h3>History</h3>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+
+                    </div>
+
+                    <div class="row top-20 d-flex justify-content-center">
+
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="row top-20 d-flex justify-content-center">
+
+                    </div>
+
+                    <div class="row top-20 d-flex justify-content-center">
+
+                    </div>
+                </div>
+            </div>
+            <div id="display-wrapper-flights" class="display-wrapper"></div>
+        </div>
+        <br>
+        <br>
+        <br>
+        <br>
     </main>
 
 </body>

@@ -53,9 +53,9 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it(`(multiparty) can block access to functions using requireIsOperational when operating status is false`, async function () {
-
+      console.log('reverted');
       await config.flightSuretyData.setOperatingStatus(false);
-
+      console.log('reverted');
       let reverted = false;
       try 
       {
@@ -64,6 +64,9 @@ contract('Flight Surety Tests', async (accounts) => {
       catch(e) {
           reverted = true;
       }
+
+      console.log('reverted');
+
       assert.equal(reverted, true, "Access not blocked for requireIsOperational");      
 
       // Set it back for other tests to work
