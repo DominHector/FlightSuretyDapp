@@ -27,7 +27,7 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
-    address private contractOwner;          // Account used to deploy contract
+    address payable contractOwner;          // Account used to deploy contract
 
     struct Airline {
         address airline;
@@ -48,6 +48,9 @@ contract FlightSuretyApp {
 
     mapping(address => uint256) public regIndexAirline;
 
+    uint256[] private airlineKeys;
+    address[] private addressesAirlines;
+
     bool public operational;
 
     /********************************************************************************************/
@@ -58,6 +61,7 @@ contract FlightSuretyApp {
     event submittedAirline(address airline, uint256 regIndex, bool executed, uint256 numVotes);
     event votedAirline(address airline, uint256 _regIndex);
     event registeredAirline(address airline, uint256 _regIndex);
+    event airlinePaid(address airline, uint256 value);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -131,6 +135,14 @@ contract FlightSuretyApp {
         return mode;
     }
 
+    /**
+    * @dev getting balance of funds held in this contract address
+    *
+    */
+    function getBalance() public view requireIsOperational returns (uint256) {
+        return address(this).balance;
+    }
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -157,6 +169,8 @@ contract FlightSuretyApp {
         }));
 
         regIndexAirline[_airline] = _regIndex;
+        airlineKeys.push(_regIndex);
+        addressesAirlines.push(_airline);
 
         emit submittedAirline(_airline, _regIndex, false, 0);
     }
@@ -199,6 +213,13 @@ contract FlightSuretyApp {
         emit registeredAirline(msg.sender, regIndex);
     }
 
+    /**
+    * @dev pay for registering Airline
+    *
+    */
+    function fundAirline() external payable requireIsOperational {
+        flightSuretyData.fundAirline();
+    }
 
     /**
  * @dev Get airline status
@@ -215,6 +236,16 @@ contract FlightSuretyApp {
         return (airlines[regIndex].airline, airlines[regIndex].approved, airlines[regIndex].regIndex, airlines[regIndex].votes);
     }
 
+
+    function getAirlines() external view returns(uint256[] memory, address[] memory) {
+        uint256[] memory arrAirlines = new uint256[](airlineKeys.length);
+        address[] memory arrAddressesAirlines = new address[](addressesAirlines.length);
+        for (uint i = 0; i < airlineKeys.length; i++){
+            arrAirlines[i] = airlines[airlineKeys[i]].regIndex;
+            arrAddressesAirlines[i] = airlines[airlineKeys[i]].airline;
+        }
+        return (arrAirlines, arrAddressesAirlines);
+    }
 
     /**
      * @dev Register a future flight for insuring.

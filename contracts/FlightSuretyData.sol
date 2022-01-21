@@ -138,6 +138,23 @@ contract FlightSuretyData {
     {
     }
 
+    /**
+    * @dev pay for registering Airline
+    *
+    */
+    function fundAirline() external payable requireIsOperational {
+        address payable dataContract = address(uint160(address(contractOwner)));
+        dataContract.transfer(msg.value);
+    }
+
+    /**
+    * @dev getting balance of funds held in this contract address
+    *
+    */
+    function getBalance() public view requireIsOperational returns (uint256) {
+        return address(this).balance;
+    }
+
 
     /**
      *  @dev Transfers eligible payout funds to insuree

@@ -47,7 +47,15 @@ export default class Contract {
     async isOperational() {
         let resultApp = await this.flightSuretyApp.methods.isOperational().call();
         let resultData = await this.flightSuretyData.methods.isOperational().call();
-        return [resultApp,resultData];
+
+        return [resultApp, resultData];
+    }
+
+    async getBalance() {
+        let resultApp = await this.flightSuretyApp.methods.getBalance().call();
+        let resultData = await this.flightSuretyData.methods.getBalance().call();
+
+        return [this.web3.utils.fromWei(resultApp), this.web3.utils.fromWei(resultData)];
     }
 
     async setOperationalStatusApp(enabled) {
@@ -58,7 +66,7 @@ export default class Contract {
         return await this.flightSuretyData.methods.setOperatingStatus(enabled).send({from: this.account});
     }
 
-    async fetchFlightStatus(flight) {
+    async fetchFlight(flight) {
         let payload = {
             airline: this.account,
             flight: flight,
@@ -81,5 +89,14 @@ export default class Contract {
 
     async getAirlineStatus(_address) {
         return await this.flightSuretyApp.methods.getAirlineStatus(_address).call();
+    }
+
+    async fundAirline(_value) {
+        let value = this.web3.utils.toWei(_value, 'ether');
+        return await this.flightSuretyApp.methods.fundAirline().send({from: this.account, value: value});
+    }
+
+    async getAirlines() {
+        return await this.flightSuretyApp.methods.getAirlines().call();
     }
 }
