@@ -66,15 +66,6 @@ export default class Contract {
         return await this.flightSuretyData.methods.setOperatingStatus(enabled).send({from: this.account});
     }
 
-    async fetchFlight(flight) {
-        let payload = {
-            airline: this.account,
-            flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        }
-        return await this.flightSuretyApp.methods.fetchFlightStatus(payload.airline, payload.flight, payload.timestamp).send({from: this.account});
-    }
-
     async submitAirline(_address) {
         return await this.flightSuretyApp.methods.submitAirline(_address).send({from: this.account});
     }
@@ -99,4 +90,32 @@ export default class Contract {
     async getAirlines() {
         return await this.flightSuretyApp.methods.getAirlines().call();
     }
+
+    async registerFlight(_address, _flight) {
+        let payload = {
+            airline: _address,
+            flight: _flight,
+            timestamp: Math.floor(Date.now() / 1000)
+        }
+
+        return await this.flightSuretyApp.methods.registerFlight(payload.airline, payload.flight, payload.timestamp).send({from: this.account});
+    }
+
+    async getFlights() {
+        return await this.flightSuretyApp.methods.getFlights().call();
+    }
+
+    async getFlightData(flightKey) {
+        return await this.flightSuretyApp.methods.getFlightData(flightKey).call();
+    }
+
+    async fetchFlight(_address, _flight) {
+        let payload = {
+            airline: _address,
+            flight: _flight,
+            timestamp: Math.floor(Date.now() / 1000)
+        }
+        return await this.flightSuretyApp.methods.fetchFlightStatus(payload.airline, payload.flight, payload.timestamp).send({from: this.account});
+    }
+
 }

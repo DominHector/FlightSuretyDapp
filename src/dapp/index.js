@@ -14,20 +14,22 @@ let blockNumbersSeen = [];
     DOM.elid('enable-app-contract').addEventListener('click', setOperatingStatusAppTrue);
     DOM.elid('disable-data-contract').addEventListener('click', setOperatingStatusDataFalse);
     DOM.elid('enable-data-contract').addEventListener('click', setOperatingStatusDataTrue);
-    DOM.elid('submit-oracle').addEventListener('click', fetchFlight);
     DOM.elid('submit-airline').addEventListener('click', submitAirline);
     DOM.elid('vote-airline').addEventListener('click', voteAirline);
     DOM.elid('register-airline').addEventListener('click', registerAirline);
     DOM.elid('get-airline-status').addEventListener('click', getAirlineStatus);
     DOM.elid('fund-airline').addEventListener('click', fundAirline);
+    DOM.elid('register-flight').addEventListener('click', registerFlight);
+    DOM.elid('submit-oracle').addEventListener('click', fetchFlight);
 
     await getAirlines();
+    await getFlights();
 
 })();
 
 const isOperational = async () => {
-    let result = null;
-    let error = null;
+    let result;
+    let error;
     try {
         result = await contract.isOperational();
     } catch (e) {
@@ -38,8 +40,8 @@ const isOperational = async () => {
 }
 
 const getBalance = async () => {
-    let result = null;
-    let error = null;
+    let result;
+    let error;
     try {
         result = await contract.getBalance();
     } catch (e) {
@@ -50,7 +52,7 @@ const getBalance = async () => {
 }
 
 const setOperatingStatusAppTrue = async () => {
-    let error = null;
+    let error;
     try {
         await contract.setOperationalStatusApp(true);
     } catch (e) {
@@ -60,7 +62,7 @@ const setOperatingStatusAppTrue = async () => {
 }
 
 const setOperatingStatusAppFalse = async () => {
-    let error = null;
+    let error;
     try {
         await contract.setOperationalStatusApp(false);
     } catch (e) {
@@ -70,7 +72,7 @@ const setOperatingStatusAppFalse = async () => {
 }
 
 const setOperatingStatusDataTrue = async () => {
-    let error = null;
+    let error;
     try {
         await contract.setOperationalStatusData(true);
     } catch (e) {
@@ -80,7 +82,7 @@ const setOperatingStatusDataTrue = async () => {
 }
 
 const setOperatingStatusDataFalse = async () => {
-    let error = null;
+    let error;
     try {
         await contract.setOperationalStatusData(false);
     } catch (e) {
@@ -89,63 +91,48 @@ const setOperatingStatusDataFalse = async () => {
     display('display-wrapper-operational', [ { label: 'Status', error: error, value: 'Enabled Contract'} ]);
 }
 
-const fetchFlight = async () => {
-    let value = DOM.elid('flight-number').value;
-    let result = null;
-    let error = null;
-    try {
-        result = await contract.fetchFlight(value);
-    } catch (e) {
-        error = JSON.stringify(e.message);
-    }
-    console.log(error);
-    display('display-wrapper-oracles', [ { label: 'Fetch Flight Status', error: error, value: value + ' ' + Math.floor(Date.now() / 1000)} ]);
-}
-
 const submitAirline = async () => {
     let value = DOM.elid('submit-airline-input').value;
-    let result = null;
-    let error = null;
+    let result;
+    let error;
 
     try {
         result = await contract.submitAirline(value);
     } catch (e) {
         error = JSON.stringify(e.message);
     }
-    console.log(error);
-    display('display-wrapper-airlines', [ { label: 'Submit Airline', error: error, value: value} ]);
+
+    display('display-wrapper-airlines', [ { label: 'Submit Airline', error: error, value: result} ]);
 }
 
 const voteAirline = async () => {
     let value = DOM.elid('vote-airline-input').value;
-    let result = null;
-    let error = null;
+    let result;
+    let error;
     try {
         result = await contract.voteAirline(value);
     } catch (e) {
         error = JSON.stringify(e.message);
     }
-    console.log(error);
     display('display-wrapper-airlines', [ { label: 'Airline Voted', error: error, value: value} ]);
 }
 
 const registerAirline = async () => {
     let value = DOM.elid('register-airline-input').value;
-    let result = null;
-    let error = null;
+    let result;
+    let error;
     try {
         result = await contract.registerAirline(value);
     } catch (e) {
         error = JSON.stringify(e.message);
     }
-    console.log(error);
     display('display-wrapper-airlines', [ { label: 'Airline Registered', error: error, value: value} ]);
 }
 
 const getAirlineStatus = async () => {
     let value = DOM.elid('get-airline-status-input').value;
-    let result = null;
-    let error = null;
+    let result;
+    let error;
     let stateAirlineKeys = ['Airline', 'Register', 'Index', 'Votes'];
     let stateAirline = [];
     display('display-wrapper-airlines', [ { label: '=======', error: error, value: '======='} ]);
@@ -167,7 +154,7 @@ const fundAirline = async () => {
     let error;
     try {
         result = await contract.fundAirline(value);
-        debugger;
+
     } catch (e) {
         error = JSON.stringify(e.message);
     }
@@ -175,19 +162,72 @@ const fundAirline = async () => {
 };
 
 const getAirlines = async () => {
-    let select = DOM.elid('select-insurance-airline-select');
+    let selectFlights = DOM.elid('register-flight-airline-select');
+    let selectInsurance = DOM.elid('insurance-airline-select');
     let result;
     let error;
     try {
         result = await contract.getAirlines();
+
         for(let inx = 0; inx < Object.keys(result[0]).length; inx++) {
-            select.appendChild(DOM.option({value: result[0][inx]}, 'Airline ' + result[1][inx]));
+            selectFlights.appendChild(DOM.option({value: result[0][inx]}, 'Airline ' + result[1][inx]));
+            selectInsurance.appendChild(DOM.option({value: result[0][inx]}, 'Airline ' + result[1][inx]));
         }
     } catch (e) {
         error = JSON.stringify(e.message);
         display('display-wrapper-passengers', [ { label: 'Airline Status', error: error, value: ''} ]);
     }
 };
+
+const registerFlight = async () => {
+    let airlineValue = DOM.elid('register-flight-airline-select').value;
+    let flightValue = DOM.elid('register-flight-number-input').value;
+    let result;
+    let error;
+
+    try {
+        result = await contract.registerFlight(airlineValue, flightValue);
+
+    } catch (e) {
+        error = JSON.stringify(e.message);
+    }
+    display('display-wrapper-flights', [ { label: 'Submit Airline', error: error, value: result} ]);
+}
+
+const getFlights = async () => {
+    let selectFlights = DOM.elid('buy-insurance-select');
+    let selectFetchFlights = DOM.elid('fetch-flight-airline-select');
+    let flightKey;
+    let flightData;
+    let error;
+    try {
+        flightKey = await contract.getFlights();
+
+        for(let inx = 0; inx < Object.keys(flightKey).length; inx++) {
+            flightData = await contract.getFlightData(flightKey[inx]);
+            selectFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[1] + '  ' + new Date(parseInt(flightData[3]))));
+            selectFetchFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[1] + '  ' + new Date(parseInt(flightData[3]))));
+        }
+    } catch (e) {
+        error = JSON.stringify(e.message);
+        display('display-wrapper-flights', [ { label: 'Airline Status', error: error, value: ''} ]);
+    }
+};
+
+const fetchFlight = async () => {
+    let airlineValue = DOM.elid('fetch-flight-airline-select').value;
+    let flightValue = DOM.elid('fetch-flight-number-input').value;
+    let result;
+    let error;
+
+    try {
+        result = await contract.fetchFlight(airlineValue, flightValue);
+        debugger;
+    } catch (e) {
+        error = JSON.stringify(e.message);
+    }
+    display('display-wrapper-flights', [ { label: 'Fetch Flight Status', error: error, value: flightValue + ' ' + Math.floor(Date.now() / 1000)} ]);
+}
 
 //====================
 

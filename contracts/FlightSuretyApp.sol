@@ -39,17 +39,20 @@ contract FlightSuretyApp {
     Airline[] public airlines;
 
     struct Flight {
+        address airline;
         bool isRegistered;
+        bytes32 flightKey;
+        string flightNumber;
         uint8 statusCode;
         uint256 updatedTimestamp;
-        address airline;
     }
     mapping(bytes32 => Flight) private flights;
 
     mapping(address => uint256) public regIndexAirline;
-
     uint256[] private airlineKeys;
     address[] private addressesAirlines;
+
+    bytes32[] private regIndexFlight;
 
     bool public operational;
 
@@ -62,6 +65,7 @@ contract FlightSuretyApp {
     event votedAirline(address airline, uint256 _regIndex);
     event registeredAirline(address airline, uint256 _regIndex);
     event airlinePaid(address airline, uint256 value);
+    event registeredFlight(address airline, bool isRegistered, bytes32 flightKey, string flightNumber, uint8 statusCode, uint256 updatedTimestamp);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -193,7 +197,7 @@ contract FlightSuretyApp {
         emit votedAirline(msg.sender, regIndex);
     }
 
-    function _getRegIndex (address _airline) private returns (uint256) {
+    function _getRegIndex (address _airline) private view returns (uint256) {
         return regIndexAirline[_airline];
     }
 
@@ -230,6 +234,7 @@ contract FlightSuretyApp {
         address _airline
     )
     external
+    view
     returns(address, bool, uint256, uint256)
     {
         uint256 regIndex = _getRegIndex(_airline);
@@ -253,11 +258,42 @@ contract FlightSuretyApp {
     */
     function registerFlight
     (
+        uint8 _airlineIndex,
+        string calldata _flight,
+        uint256 _timestamp
     )
     external
-    pure
+    payable
     {
+        address _airline = airlines[_airlineIndex].airline;
+        bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
 
+        flights[flightKey] = Flight ({
+            airline: _airline,
+            isRegistered: true,
+            flightKey: flightKey,
+            flightNumber: _flight,
+            statusCode: STATUS_CODE_UNKNOWN,
+            updatedTimestamp: _timestamp
+        });
+
+        regIndexFlight.push(flightKey);
+
+        emit registeredFlight(_airline, true, flightKey, _flight, STATUS_CODE_UNKNOWN, _timestamp);
+    }
+
+    function getFlights() external view returns (bytes32[] memory ) {
+        bytes32[] memory arrFlights = new bytes32[](regIndexFlight.length);
+
+        for (uint i = 0; i < regIndexFlight.length; i++){
+            arrFlights[i] = flights[regIndexFlight[i]].flightKey;
+        }
+
+        return (arrFlights);
+    }
+
+    function getFlightData(bytes32 flightKey) external view requireIsOperational returns(address, string memory, uint8, uint256) {
+        return (flights[flightKey].airline, flights[flightKey].flightNumber, flights[flightKey].statusCode, flights[flightKey].updatedTimestamp);
     }
 
     /**

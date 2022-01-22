@@ -22,7 +22,7 @@ contract FlightSuretyData {
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
-    constructor(address airline) public payable {
+    constructor() public payable {
         contractOwner = msg.sender;
     }
 
