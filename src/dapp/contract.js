@@ -91,11 +91,16 @@ export default class Contract {
         return await this.flightSuretyApp.methods.getAirlines().call();
     }
 
-    async registerFlight(_address, _flight) {
+    async registerFlight(_address, _flight, _timestamp) {
+
+        var dateFlight = _timestamp;
+        dateFlight = dateFlight.split("-");
+        var newDateFlight = new Date( dateFlight[0], dateFlight[1] - 1, dateFlight[2]);
+
         let payload = {
             airline: _address,
             flight: _flight,
-            timestamp: Math.floor(Date.now() / 1000)
+            timestamp: newDateFlight.getTime()
         }
 
         return await this.flightSuretyApp.methods.registerFlight(payload.airline, payload.flight, payload.timestamp).send({from: this.account});
@@ -109,13 +114,8 @@ export default class Contract {
         return await this.flightSuretyApp.methods.getFlightData(flightKey).call();
     }
 
-    async fetchFlight(_address, _flight) {
-        let payload = {
-            airline: _address,
-            flight: _flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        }
-        return await this.flightSuretyApp.methods.fetchFlightStatus(payload.airline, payload.flight, payload.timestamp).send({from: this.account});
+    async fetchFlight(_flightKey) {
+        return await this.flightSuretyApp.methods.fetchFlightStatus(_flightKey).send({from: this.account});
     }
 
 }

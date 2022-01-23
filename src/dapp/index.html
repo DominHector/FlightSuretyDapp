@@ -106,7 +106,9 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="row top-20 d-flex justify-content-center">
-                        <input type="text" id="register-flight-number-input" placeholder="Figth number" maxlength="5"> <btn class="btn btn-primary" id="register-flight">Register flight</btn>
+                        <input type="text" id="register-flight-number-input" placeholder="Number" maxlength="5" style="max-width: 100px; min-width: 100px;">
+                        <input type="date" id="register-flight-timestamp-input" style="max-width: 168px; min-width: 168px;">
+                        <btn class="btn btn-primary" id="register-flight">Register flight</btn>
                     </div>
                 </div>
 
@@ -118,13 +120,7 @@
             <h3>Flight Insurances</h3>
             <div class="row">
                 <div class="col-lg-12 top-20 d-flex justify-content-end">
-                    <select id="insurance-airline-select" name="flight-selector">
-                        <option value="">Select airline</option>
-                    </select>
-                    <btn class="btn btn-primary" id="select-insurance-airline">Search flight</btn>
-                </div>
-
-                <div class="col-lg-12 top-20 d-flex justify-content-end">
+                    <input type="number" step=".1" id="register-flight-number-input" placeholder="Limit 1 eth" max="1" style="max-width: 120px; min-width: 120px;">
                     <select id="buy-insurance-select" name="flight-selector">
                         <option value="">Select flight</option>
                     </select>
@@ -136,6 +132,13 @@
                         <option value="">Select flight</option>
                     </select>
                     <btn class="btn btn-primary" id="submit-oracle">Fetch flight status</btn>
+                </div>
+
+                <div class="col-lg-12 top-20 d-flex justify-content-end">
+                    <select id="get-status-flight-select" name="flight-selector" style="min-height: 38.21px">
+                        <option value="">Select flight</option>
+                    </select>
+                    <btn class="btn btn-primary" id="get-flight-status">Get flight status</btn>
                 </div>
             </div>
             <div id="display-wrapper-passengers" class="display-wrapper"></div>

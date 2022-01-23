@@ -21,6 +21,7 @@ let blockNumbersSeen = [];
     DOM.elid('fund-airline').addEventListener('click', fundAirline);
     DOM.elid('register-flight').addEventListener('click', registerFlight);
     DOM.elid('submit-oracle').addEventListener('click', fetchFlight);
+    DOM.elid('get-flight-status').addEventListener('click', getFlightStatus);
 
     await getAirlines();
     await getFlights();
@@ -32,6 +33,7 @@ const isOperational = async () => {
     let error;
     try {
         result = await contract.isOperational();
+
     } catch (e) {
         error = e;
     }
@@ -44,6 +46,7 @@ const getBalance = async () => {
     let error;
     try {
         result = await contract.getBalance();
+
     } catch (e) {
         error = e;
     }
@@ -98,6 +101,7 @@ const submitAirline = async () => {
 
     try {
         result = await contract.submitAirline(value);
+
     } catch (e) {
         error = JSON.stringify(e.message);
     }
@@ -111,6 +115,7 @@ const voteAirline = async () => {
     let error;
     try {
         result = await contract.voteAirline(value);
+
     } catch (e) {
         error = JSON.stringify(e.message);
     }
@@ -123,6 +128,7 @@ const registerAirline = async () => {
     let error;
     try {
         result = await contract.registerAirline(value);
+
     } catch (e) {
         error = JSON.stringify(e.message);
     }
@@ -133,11 +139,12 @@ const getAirlineStatus = async () => {
     let value = DOM.elid('get-airline-status-input').value;
     let result;
     let error;
-    let stateAirlineKeys = ['Airline', 'Register', 'Index', 'Votes'];
+    let stateAirlineKeys = ['Airline', 'Aproved', 'Funded', 'Index', 'Votes'];
     let stateAirline = [];
     display('display-wrapper-airlines', [ { label: '=======', error: error, value: '======='} ]);
     try {
         result = await contract.getAirlineStatus(value);
+
         for(let inx = 0; inx < Object.keys(result).length; inx++) {
             display('display-wrapper-airlines', [ { label: stateAirlineKeys[inx], error: error, value: result[inx]} ]);
         }
@@ -155,6 +162,7 @@ const fundAirline = async () => {
     try {
         result = await contract.fundAirline(value);
 
+
     } catch (e) {
         error = JSON.stringify(e.message);
     }
@@ -169,12 +177,12 @@ const getAirlines = async () => {
     try {
         result = await contract.getAirlines();
 
-        for(let inx = 0; inx < Object.keys(result[0]).length; inx++) {
-            selectFlights.appendChild(DOM.option({value: result[0][inx]}, 'Airline ' + result[1][inx]));
-            selectInsurance.appendChild(DOM.option({value: result[0][inx]}, 'Airline ' + result[1][inx]));
+        for(let inx = 0; inx < Object.keys(result).length; inx++) {
+            selectFlights.appendChild(DOM.option({value: result[inx]}, 'Airline ' + result[inx]));
         }
     } catch (e) {
         error = JSON.stringify(e.message);
+
         display('display-wrapper-passengers', [ { label: 'Airline Status', error: error, value: ''} ]);
     }
 };
@@ -182,11 +190,12 @@ const getAirlines = async () => {
 const registerFlight = async () => {
     let airlineValue = DOM.elid('register-flight-airline-select').value;
     let flightValue = DOM.elid('register-flight-number-input').value;
+    let flightTimestamp = DOM.elid('register-flight-timestamp-input').value;
     let result;
     let error;
 
     try {
-        result = await contract.registerFlight(airlineValue, flightValue);
+        result = await contract.registerFlight(airlineValue, flightValue, flightTimestamp);
 
     } catch (e) {
         error = JSON.stringify(e.message);
@@ -197,6 +206,7 @@ const registerFlight = async () => {
 const getFlights = async () => {
     let selectFlights = DOM.elid('buy-insurance-select');
     let selectFetchFlights = DOM.elid('fetch-flight-airline-select');
+    let selectGetFlights = DOM.elid('get-status-flight-select');
     let flightKey;
     let flightData;
     let error;
@@ -205,28 +215,70 @@ const getFlights = async () => {
 
         for(let inx = 0; inx < Object.keys(flightKey).length; inx++) {
             flightData = await contract.getFlightData(flightKey[inx]);
-            selectFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[1] + '  ' + new Date(parseInt(flightData[3]))));
-            selectFetchFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[1] + '  ' + new Date(parseInt(flightData[3]))));
+
+            selectFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[3] + '  ' + new Date(parseInt(flightData[5]))));
+            selectFetchFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[3] + '  ' + new Date(parseInt(flightData[5]))));
+            selectGetFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[3] + '  ' + new Date(parseInt(flightData[5]))));
         }
+        console.log(flightData);
     } catch (e) {
         error = JSON.stringify(e.message);
-        display('display-wrapper-flights', [ { label: 'Airline Status', error: error, value: ''} ]);
+        display('display-wrapper-flights', [ { label: 'Flight Status', error: error, value: ''} ]);
+    }
+};
+
+const getFlightStatus = async () => {
+    let flightKey = DOM.elid('get-status-flight-select').value;
+    let flightData;
+    let error;
+
+    try {
+        flightData = await contract.getFlightData(flightKey);
+
+        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: '=========='}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Airline', error: '', value: flightData[0]}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Key', error: '', value: flightData[2]}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Number', error: '', value: flightData[3]}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Date', error: '', value: flightData[5]}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: getStatusCode(flightData[4])}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: '=========='}]);
+
+    } catch (e) {
+        error = JSON.stringify(e.message);
+        display('display-wrapper-passengers', [ { label: 'Airline Status', error: error, value: ''} ]);
     }
 };
 
 const fetchFlight = async () => {
-    let airlineValue = DOM.elid('fetch-flight-airline-select').value;
-    let flightValue = DOM.elid('fetch-flight-number-input').value;
+    let flightKey = DOM.elid('fetch-flight-airline-select').value;
     let result;
     let error;
 
     try {
-        result = await contract.fetchFlight(airlineValue, flightValue);
-        debugger;
+        result = await contract.fetchFlight(flightKey);
+
     } catch (e) {
         error = JSON.stringify(e.message);
     }
-    display('display-wrapper-flights', [ { label: 'Fetch Flight Status', error: error, value: flightValue + ' ' + Math.floor(Date.now() / 1000)} ]);
+
+    display('display-wrapper-passengers', [ { label: 'Fetch Flight Status', error: error, value: flightKey} ]);
+}
+
+const getStatusCode = function(code) {
+
+    if (code === '0') {
+        return 'UNKNOWN';
+    } else if (code === '10') {
+        return 'ON_TIME';
+    } else if (code === '20'){
+        return 'LATE_AIRLINE';
+    } else if (code === '30') {
+        return 'LATE_WEATHER';
+    } else if (code === '40') {
+        return 'LATE_TECHNICAL';
+    } else if (code === '50') {
+        return 'LATE_OTHER';
+    }
 }
 
 //====================

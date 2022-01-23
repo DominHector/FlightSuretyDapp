@@ -13,7 +13,7 @@ let registeredOracles = [];
 let STATUS_CODES = [0, 10, 20, 30, 40, 50];
 
 web3.eth.getAccounts((error, accounts) => {
-    for(let i = 39; i > 29; i--) {
+    for(let i = 39; i > 19; i--) {
         flightSuretyApp.methods.registerOracle()
             .send({from: accounts[i], value: web3.utils.toWei("1",'ether'), gas: 6500000}, (error, result) => {
                 flightSuretyApp.methods.getMyIndexes().call({from: accounts[i]}, (error, result) => {
@@ -41,12 +41,18 @@ flightSuretyApp.events.OracleRequest({
         if(registeredOracles[i].index.includes(index)) {
             flightSuretyApp.methods.submitOracleResponse(index, airline, flight, timestamp, statusCode)
                 .send({from: registeredOracles[i].address, gas: 6500000}, (error, result) => {
-                    console.log(flight);
-                    console.log("FROM " + JSON.stringify(registeredOracles[i]) + "STATUS CODE: " + statusCode);
+                    console.log("FROM " + JSON.stringify(registeredOracles[i]) + " STATUS CODE: " + statusCode);
                 });
         }
     }
 
+});
+
+flightSuretyApp.events.FlightStatusInfo({
+    fromBlock: 0
+}, function (error, event) {
+    console.log(event);
+    console.log(error);
 });
 
 const app = express();

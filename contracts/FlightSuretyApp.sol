@@ -29,30 +29,18 @@ contract FlightSuretyApp {
 
     address payable contractOwner;          // Account used to deploy contract
 
-    struct Airline {
-        address airline;
-        bool approved;
-        uint256 regIndex;
-        uint256 votes;
-        mapping(address => bool) votedFor;
-    }
-    Airline[] public airlines;
-
     struct Flight {
         address airline;
         bool isRegistered;
         bytes32 flightKey;
         string flightNumber;
         uint8 statusCode;
-        uint256 updatedTimestamp;
+        uint256 timestamp;
     }
     mapping(bytes32 => Flight) private flights;
+    bytes32[] private regIndexFlight;
 
     mapping(address => uint256) public regIndexAirline;
-    uint256[] private airlineKeys;
-    address[] private addressesAirlines;
-
-    bytes32[] private regIndexFlight;
 
     bool public operational;
 
@@ -61,11 +49,8 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     event OperationalStatusChanged(bool mode);
-    event submittedAirline(address airline, uint256 regIndex, bool executed, uint256 numVotes);
-    event votedAirline(address airline, uint256 _regIndex);
-    event registeredAirline(address airline, uint256 _regIndex);
     event airlinePaid(address airline, uint256 value);
-    event registeredFlight(address airline, bool isRegistered, bytes32 flightKey, string flightNumber, uint8 statusCode, uint256 updatedTimestamp);
+    event registeredFlight(address airline, bool isRegistered, bytes32 flightKey, string flightNumber, uint8 statusCode, uint256 timestamp);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -152,105 +137,45 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
 
-    /**
-     * @dev Add an airline to the submit queue
-    *
-    */
-    function submitAirline
-    (
-        address _airline
-    )
-    external
-    payable
-    {
-        uint256 _regIndex = airlines.length;
-
-        airlines.push(Airline({
-            airline: _airline,
-            approved: false,
-            regIndex: _regIndex,
-            votes: 0
-        }));
-
-        regIndexAirline[_airline] = _regIndex;
-        airlineKeys.push(_regIndex);
-        addressesAirlines.push(_airline);
-
-        emit submittedAirline(_airline, _regIndex, false, 0);
+    /** @dev Add an airline to the submit queue*/
+    function submitAirline(address _airline) external returns(address) {
+        flightSuretyData.submitAirline(_airline);
+        return (_airline);
     }
 
-    /**
-     * @dev Vote an airline
-    *
-    */
-    function voteAirline
-    (
-        address _airline
-    )
-    external
-    {
-        uint256 regIndex = _getRegIndex(_airline);
-
-        airlines[regIndex].votes += 1;
-        airlines[regIndex].votedFor[msg.sender] = true;
-
-        emit votedAirline(msg.sender, regIndex);
+    /** @dev Vote an airline*/
+    function voteAirline(address _airline) external returns(address, address) {
+        flightSuretyData.voteAirline(_airline);
+        return (_airline, msg.sender);
     }
 
-    function _getRegIndex (address _airline) private view returns (uint256) {
-        return regIndexAirline[_airline];
+
+    /** @dev Add an airline to the registration queue*/
+    function registerAirline(address _airline) external returns(address, address) {
+        flightSuretyData.registerAirline(_airline);
+        return (_airline, msg.sender);
     }
 
-    /**
-     * @dev Add an airline to the registration queue
-    *
-    */
-    function registerAirline
-    (
-        address _airline
-    )
-    external
-    {
-        uint256 regIndex = _getRegIndex(_airline);
-        airlines[regIndex].approved = true;
 
-        emit registeredAirline(msg.sender, regIndex);
-    }
-
-    /**
-    * @dev pay for registering Airline
-    *
-    */
+    /** @dev pay for registering Airline**/
     function fundAirline() external payable requireIsOperational {
-        flightSuretyData.fundAirline();
-    }
-
-    /**
- * @dev Get airline status
-    *
-    */
-    function getAirlineStatus
-    (
-        address _airline
-    )
-    external
-    view
-    returns(address, bool, uint256, uint256)
-    {
-        uint256 regIndex = _getRegIndex(_airline);
-        return (airlines[regIndex].airline, airlines[regIndex].approved, airlines[regIndex].regIndex, airlines[regIndex].votes);
+        address payable payableAccount = address(uint160(address(flightSuretyData)));
+        payableAccount.transfer(msg.value);
+        flightSuretyData.fundAirline(msg.sender);
     }
 
 
-    function getAirlines() external view returns(uint256[] memory, address[] memory) {
-        uint256[] memory arrAirlines = new uint256[](airlineKeys.length);
-        address[] memory arrAddressesAirlines = new address[](addressesAirlines.length);
-        for (uint i = 0; i < airlineKeys.length; i++){
-            arrAirlines[i] = airlines[airlineKeys[i]].regIndex;
-            arrAddressesAirlines[i] = airlines[airlineKeys[i]].airline;
-        }
-        return (arrAirlines, arrAddressesAirlines);
+    /** @dev Get airline status**/
+    function getAirlineStatus(address _airline) external view returns(address, bool, bool, uint256, uint256){
+        return flightSuretyData.getAirlineStatus(_airline);
     }
+
+
+    /** @dev Register a future flight for insuring.**/
+    function getAirlines() external view returns(address[] memory) {
+        return flightSuretyData.getAirlines();
+    }
+
 
     /**
      * @dev Register a future flight for insuring.
@@ -258,15 +183,15 @@ contract FlightSuretyApp {
     */
     function registerFlight
     (
-        uint8 _airlineIndex,
+        address _airline,
         string calldata _flight,
         uint256 _timestamp
     )
     external
     payable
     {
-        address _airline = airlines[_airlineIndex].airline;
-        bytes32 flightKey = getFlightKey(msg.sender, _flight, _timestamp);
+
+        bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
 
         flights[flightKey] = Flight ({
             airline: _airline,
@@ -274,7 +199,7 @@ contract FlightSuretyApp {
             flightKey: flightKey,
             flightNumber: _flight,
             statusCode: STATUS_CODE_UNKNOWN,
-            updatedTimestamp: _timestamp
+            timestamp: _timestamp
         });
 
         regIndexFlight.push(flightKey);
@@ -282,6 +207,10 @@ contract FlightSuretyApp {
         emit registeredFlight(_airline, true, flightKey, _flight, STATUS_CODE_UNKNOWN, _timestamp);
     }
 
+    /**
+    * @dev Get All Flights
+    *
+    */
     function getFlights() external view returns (bytes32[] memory ) {
         bytes32[] memory arrFlights = new bytes32[](regIndexFlight.length);
 
@@ -292,8 +221,33 @@ contract FlightSuretyApp {
         return (arrFlights);
     }
 
-    function getFlightData(bytes32 flightKey) external view requireIsOperational returns(address, string memory, uint8, uint256) {
-        return (flights[flightKey].airline, flights[flightKey].flightNumber, flights[flightKey].statusCode, flights[flightKey].updatedTimestamp);
+
+    /**
+    * @dev Get Flight data
+    *
+    */
+    function getFlightData(
+        bytes32 flightKey
+    )
+    external
+    view
+    requireIsOperational
+    returns(
+        address,
+        bool,
+        bytes32,
+        string memory,
+        uint8,
+        uint256
+    ) {
+        return (
+            flights[flightKey].airline,
+            flights[flightKey].isRegistered,
+            flights[flightKey].flightKey,
+            flights[flightKey].flightNumber,
+            flights[flightKey].statusCode,
+            flights[flightKey].timestamp
+        );
     }
 
     /**
@@ -302,23 +256,19 @@ contract FlightSuretyApp {
     */
     function processFlightStatus
     (
-        address airline,
-        string memory flight,
-        uint256 timestamp,
+        bytes32 flightKey,
         uint8 statusCode
     )
     internal
-    pure
     {
+        flights[flightKey].statusCode = statusCode;
     }
 
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus
                         (
-                            address airline,
-                            string calldata flight,
-                            uint256 timestamp                            
+                            bytes32 _flightKey
                         )
                         external
                         requireIsOperational
@@ -326,13 +276,13 @@ contract FlightSuretyApp {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
-        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+        bytes32 key = keccak256(abi.encodePacked(index, flights[_flightKey].airline, flights[_flightKey].flightNumber, flights[_flightKey].timestamp));
         oracleResponses[key] = ResponseInfo({
                                                 requester: msg.sender,
                                                 isOpen: true
                                             });
 
-        emit OracleRequest(index, airline, flight, timestamp);
+        emit OracleRequest(index, flights[_flightKey].airline, flights[_flightKey].flightNumber, flights[_flightKey].timestamp);
     } 
 
 
@@ -370,7 +320,7 @@ contract FlightSuretyApp {
     mapping(bytes32 => ResponseInfo) private oracleResponses;
 
     // Event fired each time an oracle submits a response
-    event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
+    event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status, bytes32 flightKye);
 
     event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
 
@@ -440,10 +390,12 @@ contract FlightSuretyApp {
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
 
-            emit FlightStatusInfo(airline, flight, timestamp, statusCode);
+            bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+
+            emit FlightStatusInfo(airline, flight, timestamp, statusCode, flightKey);
 
             // Handle flight status as appropriate
-            processFlightStatus(airline, flight, timestamp, statusCode);
+            processFlightStatus(flightKey, statusCode);
         }
     }
 
