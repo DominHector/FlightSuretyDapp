@@ -15,6 +15,7 @@ contract FlightSuretyData {
 
     struct Airline {
         address airline;
+        bool isSubmitted;
         bool isApproved;
         bool isFunded;
         uint256 regIndex;
@@ -23,11 +24,29 @@ contract FlightSuretyData {
     }
     mapping(address => Airline) private airlines;
     address[] private addressesAirlines;
-    uint256 regIndexAirline = 0;
+    uint256 regIndexAirline;
+
+
+    struct Insurance {
+        address passenger;
+        bytes32 flight;
+        uint256 amount;
+        uint payout;
+        bool isPaid;
+    }
+    mapping(address => Insurance) private insurances;
+
 
     /********************************************************************************************/
-    /*                                       EVENT DEFINITIONS                                  */
+    /*                                       EVENTS                                             */
     /********************************************************************************************/
+
+    event OperationalStatusChanged(bool mode);
+    event submittedAirline(address airline, bool isSubmitted, bool isApproved, bool isFunded, uint256 regIndex, uint256 votes);
+    event votedAirline(address airline, address sender);
+    event registeredAirline(address airline, address sender, bool isApproved);
+    event fundedAirline(address airline, uint value, bool isFunded);
+    event PaidInsurance(address _passenger, bytes32 _flight, uint256 _value, uint _payout, bool isPaid);
 
 
     /**
@@ -36,20 +55,11 @@ contract FlightSuretyData {
     */
     constructor(address _airline) public payable {
         contractOwner = msg.sender;
-        airlines[_airline] = Airline(_airline, false, false, 0, 0);
+        airlines[_airline] = Airline(_airline, true, false, false, 0, 0);
         regIndexAirline = 0;
         addressesAirlines.push(_airline);
     }
 
-    /********************************************************************************************/
-    /*                                       EVENTS                                             */
-    /********************************************************************************************/
-
-    event OperationalStatusChanged(bool mode);
-    event submittedAirline(address airline, bool isApproved, bool isFunded, uint256 regIndex, uint256 votes);
-    event votedAirline(address airline, address sender);
-    event registeredAirline(address airline, address sender, bool isApproved);
-    event fundedAirline(address airline, uint value, bool isFunded);
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -94,23 +104,28 @@ contract FlightSuretyData {
         return operational;
     }
 
-    /**
-    * @dev Sets contract operations on/off
-    *
-    * When operational mode is disabled, all write transactions except for this one will fail
-    */
+
+    /** @dev Sets contract operations on/off
+    *** When operational mode is disabled, all write transactions except for this one will fail */
     function setOperatingStatus(bool mode) external requireContractOwner differentModeRequest(mode) {
         operational = mode;
         emit OperationalStatusChanged(mode);
     }
 
+
     function authorizeCaller(address callerAddress) external requireContractOwner requireIsOperational {
         authorizedCallers[callerAddress] = true;
     }
 
+
     /** @dev getting balance of funds held in this contract address**/
     function getBalance() public view requireIsOperational returns (uint256) {
         return address(this).balance;
+    }
+
+    /** @dev getting if is submitted bool **/
+    function isSubmitted(address _airline) external view returns(bool) {
+        return airlines[_airline].isSubmitted;
     }
 
     /********************************************************************************************/
@@ -118,15 +133,13 @@ contract FlightSuretyData {
     /********************************************************************************************/
 
 
-    /**
- * @dev Add an airline to the submit queue
-    *
-    */
-    function submitAirline(address _airline) external payable {
+    /** @dev Add an airline to the submit queue **/
+    function submitAirline(address _airline) external payable requireIsOperational {
         uint256 regIndex = regIndexAirline++;
 
         airlines[_airline] = Airline({
             airline: _airline,
+            isSubmitted: true,
             isApproved: false,
             isFunded: false,
             regIndex: regIndex,
@@ -136,13 +149,11 @@ contract FlightSuretyData {
         regIndexAirline = regIndex;
         addressesAirlines.push(_airline);
 
-        emit submittedAirline(_airline, false, false, regIndex, 0);
+        emit submittedAirline(_airline, true, false, false, regIndex, 0);
     }
 
-    /**
-    * @dev Vote an airline
-    *
-    */
+
+    /** @dev Vote an airline **/
     function voteAirline(address _airline) external {
         airlines[_airline].votes += 1;
         airlines[_airline].votedFor[msg.sender] = true;
@@ -158,19 +169,17 @@ contract FlightSuretyData {
     }
 
 
-    /**
-    * @dev pay for registering Airline
-    *
-    */
+    /** @dev pay for registering Airline **/
     function fundAirline(address payable _airline) external payable requireIsOperational {
         airlines[_airline].isFunded = true;
     }
 
 
     /** @dev Get airline status**/
-    function getAirlineStatus(address _airline) external view returns(address, bool, bool, uint256, uint256) {
+    function getAirline(address _airline) external view returns(address, bool, bool, bool, uint256, uint256) {
         return (
             airlines[_airline].airline,
+            airlines[_airline].isSubmitted,
             airlines[_airline].isApproved,
             airlines[_airline].isFunded,
             airlines[_airline].regIndex,
@@ -188,68 +197,30 @@ contract FlightSuretyData {
     }
 
     /** @dev Buy insurance for a flight**/
-    function buyInsurance
-    (
+    function buyInsurance(address _passenger, bytes32 _flight, uint256 _value, uint _payout) external payable {
 
-    )
-    external
-    payable
-    {
+        insurances[_passenger] = Insurance({
+            passenger: _passenger,
+            flight: _flight,
+            amount: _value,
+            payout: _payout,
+            isPaid: true
+        });
 
+        emit PaidInsurance(_passenger, _flight, _value, _payout, true);
     }
 
 
-//    /**  @dev Credits payouts to insurees**/
-//    function creditInsurees() {
-//    (
-//    )
-//    external
-//    pure
-//    {
-//    }
+    /**  @dev Transfers eligible payout funds to insuree **/
+    function payout(address payable _passenger) external payable {
+        uint amount = insurances[_passenger].payout;
+        address payable passenger = address(uint160(_passenger));
 
-
-    /**  @dev Transfers eligible payout funds to insuree**/
-    function pay
-    (
-    )
-    external
-    pure
-    {
-    }
-
-
-    /** @dev Initial funding for the insurance. Unless there are too many delayed flights*      resulting in insurance payouts, the contract should be self-sustaining*
-    */
-    function fund
-    (
-    )
-    public
-    payable
-    {
-    }
-
-    function getFlightKey
-    (
-        address airline,
-        string memory flight,
-        uint256 timestamp
-    )
-    pure
-    internal
-    returns(bytes32)
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
+        passenger.transfer(amount);
     }
 
 
     /** @dev Fallback function for funding smart contract.**/
-    function()
-    external
-    payable
-    {
-        fund();
-    }
-
+    function () payable external {}
 
 }

@@ -22,6 +22,8 @@ let blockNumbersSeen = [];
     DOM.elid('register-flight').addEventListener('click', registerFlight);
     DOM.elid('submit-oracle').addEventListener('click', fetchFlight);
     DOM.elid('get-flight-status').addEventListener('click', getFlightStatus);
+    DOM.elid('buy-insurance').addEventListener('click', buyInsurance);
+    DOM.elid('get-payout').addEventListener('click', payout);
 
     await getAirlines();
     await getFlights();
@@ -35,7 +37,7 @@ const isOperational = async () => {
         result = await contract.isOperational();
 
     } catch (e) {
-        error = e;
+        error = e.message;
     }
     display('display-wrapper-operational', [ { label: 'Status App Contract', error: error, value: result[0]} ]);
     display('display-wrapper-operational', [ { label: 'Status Data Contract', error: error, value: result[1]} ]);
@@ -48,7 +50,7 @@ const getBalance = async () => {
         result = await contract.getBalance();
 
     } catch (e) {
-        error = e;
+        error = e.message;
     }
     display('display-wrapper-operational', [ { label: 'Balance App Contract', error: error, value: result[0] + ' eth'} ]);
     display('display-wrapper-operational', [ { label: 'Balance Data Contract', error: error, value: result[1] + ' eth'} ]);
@@ -101,12 +103,11 @@ const submitAirline = async () => {
 
     try {
         result = await contract.submitAirline(value);
-
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
     }
 
-    display('display-wrapper-airlines', [ { label: 'Submit Airline', error: error, value: result} ]);
+    display('display-wrapper-airlines', [ { label: 'Submit Airline', error: error, value: value} ]);
 }
 
 const voteAirline = async () => {
@@ -117,7 +118,7 @@ const voteAirline = async () => {
         result = await contract.voteAirline(value);
 
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
     }
     display('display-wrapper-airlines', [ { label: 'Airline Voted', error: error, value: value} ]);
 }
@@ -130,7 +131,7 @@ const registerAirline = async () => {
         result = await contract.registerAirline(value);
 
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
     }
     display('display-wrapper-airlines', [ { label: 'Airline Registered', error: error, value: value} ]);
 }
@@ -139,7 +140,7 @@ const getAirlineStatus = async () => {
     let value = DOM.elid('get-airline-status-input').value;
     let result;
     let error;
-    let stateAirlineKeys = ['Airline', 'Aproved', 'Funded', 'Index', 'Votes'];
+    let stateAirlineKeys = ['Airline', 'Submitted', 'Approved', 'Funded', 'Index', 'Votes'];
     let stateAirline = [];
     display('display-wrapper-airlines', [ { label: '=======', error: error, value: '======='} ]);
     try {
@@ -149,7 +150,7 @@ const getAirlineStatus = async () => {
             display('display-wrapper-airlines', [ { label: stateAirlineKeys[inx], error: error, value: result[inx]} ]);
         }
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
         display('display-wrapper-airlines', [ { label: 'Airline Status', error: error, value: result} ]);
     }
     display('display-wrapper-airlines', [ { label: '=======', error: error, value: '======='} ]);
@@ -164,7 +165,7 @@ const fundAirline = async () => {
 
 
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
     }
     display('display-wrapper-airlines', [ { label: 'Airline Status', error: error, value: result} ]);
 };
@@ -181,7 +182,7 @@ const getAirlines = async () => {
             selectFlights.appendChild(DOM.option({value: result[inx]}, 'Airline ' + result[inx]));
         }
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
 
         display('display-wrapper-passengers', [ { label: 'Airline Status', error: error, value: ''} ]);
     }
@@ -198,9 +199,9 @@ const registerFlight = async () => {
         result = await contract.registerFlight(airlineValue, flightValue, flightTimestamp);
 
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
     }
-    display('display-wrapper-flights', [ { label: 'Submit Airline', error: error, value: result} ]);
+    display('display-wrapper-flights', [ { label: 'Submit Airline', error: error, value: flightValue} ]);
 }
 
 const getFlights = async () => {
@@ -220,9 +221,9 @@ const getFlights = async () => {
             selectFetchFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[3] + '  ' + new Date(parseInt(flightData[5]))));
             selectGetFlights.appendChild(DOM.option({value: flightKey[inx]}, 'Flight: ' + flightData[3] + '  ' + new Date(parseInt(flightData[5]))));
         }
-        console.log(flightData);
+
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
         display('display-wrapper-flights', [ { label: 'Flight Status', error: error, value: ''} ]);
     }
 };
@@ -235,36 +236,21 @@ const getFlightStatus = async () => {
     try {
         flightData = await contract.getFlightData(flightKey);
 
-        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: '=========='}]);
+        display('display-wrapper-passengers', [ { label: '', error: '', value: '=========='}]);
         display('display-wrapper-passengers', [ { label: 'Flight Airline', error: '', value: flightData[0]}]);
         display('display-wrapper-passengers', [ { label: 'Flight Key', error: '', value: flightData[2]}]);
         display('display-wrapper-passengers', [ { label: 'Flight Number', error: '', value: flightData[3]}]);
         display('display-wrapper-passengers', [ { label: 'Flight Date', error: '', value: flightData[5]}]);
-        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: getStatusCode(flightData[4])}]);
-        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: '=========='}]);
+        display('display-wrapper-passengers', [ { label: 'Flight Status', error: '', value: _getStatusCode(flightData[4])}]);
+        display('display-wrapper-passengers', [ { label: '', error: '', value: '=========='}]);
 
     } catch (e) {
-        error = JSON.stringify(e.message);
+        error = e.message;
         display('display-wrapper-passengers', [ { label: 'Airline Status', error: error, value: ''} ]);
     }
 };
 
-const fetchFlight = async () => {
-    let flightKey = DOM.elid('fetch-flight-airline-select').value;
-    let result;
-    let error;
-
-    try {
-        result = await contract.fetchFlight(flightKey);
-
-    } catch (e) {
-        error = JSON.stringify(e.message);
-    }
-
-    display('display-wrapper-passengers', [ { label: 'Fetch Flight Status', error: error, value: flightKey} ]);
-}
-
-const getStatusCode = function(code) {
+const _getStatusCode = function(code) {
 
     if (code === '0') {
         return 'UNKNOWN';
@@ -280,6 +266,49 @@ const getStatusCode = function(code) {
         return 'LATE_OTHER';
     }
 }
+
+const fetchFlight = async () => {
+    let flightKey = DOM.elid('fetch-flight-airline-select').value;
+    let result;
+    let error;
+
+    try {
+        result = await contract.fetchFlight(flightKey);
+
+    } catch (e) {
+        error = e.message;
+    }
+
+    display('display-wrapper-passengers', [ { label: 'Fetch Flight Status', error: error, value: flightKey} ]);
+}
+
+const buyInsurance = async () => {
+    let value = DOM.elid('buy-insurance-input').value;
+    let flight = DOM.elid('buy-insurance-select').value;
+    let result;
+    let error;
+
+    try {
+        result = await contract.buyInsurance(value, flight);
+
+    } catch (e) {
+        error = e.message;
+    }
+    display('display-wrapper-passengers', [ { label: 'Buy Status', error: error, value: result} ]);
+};
+
+const payout = async () => {
+    let result
+    let error;
+    try {
+        result = await contract.payout();
+
+    } catch (e) {
+        error = e.message;
+    }
+    display('display-wrapper-passengers', [ { label: 'Pay Out', error: error, value: result} ]);
+};
+
 
 //====================
 

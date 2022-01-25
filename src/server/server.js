@@ -1,4 +1,5 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 import express from 'express';
@@ -6,6 +7,7 @@ import express from 'express';
 let config = Config['localhost'];
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 
 let oracles = 10;
 
@@ -49,6 +51,13 @@ flightSuretyApp.events.OracleRequest({
 });
 
 flightSuretyApp.events.FlightStatusInfo({
+    fromBlock: 0
+}, function (error, event) {
+    console.log(event);
+    console.log(error);
+});
+
+flightSuretyData.events.PaidInsurance({
     fromBlock: 0
 }, function (error, event) {
     console.log(event);

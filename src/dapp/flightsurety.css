@@ -50,6 +50,7 @@ section {
     font-family: monospace;
     font-size: 12px;
     color: gray;
+    word-break: break-all;
 }
 
 .field {

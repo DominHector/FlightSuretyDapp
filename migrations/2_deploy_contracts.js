@@ -5,7 +5,7 @@ const path = require('path')
 
 module.exports = function (deployer, network, accounts) {
     var flightSuretyData, flightSuretyApp
-    let firstAirline = accounts[1]
+    let firstAirline = accounts[0];
 
     deployer.deploy(FlightSuretyData, firstAirline)
         .then(instance => {

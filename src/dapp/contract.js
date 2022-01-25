@@ -118,4 +118,12 @@ export default class Contract {
         return await this.flightSuretyApp.methods.fetchFlightStatus(_flightKey).send({from: this.account});
     }
 
+    async buyInsurance(_value, _flight) {
+        let value = this.web3.utils.toWei(_value, 'ether');
+        return await this.flightSuretyApp.methods.buyInsurance(_flight).send({from: this.account, value: value});
+    }
+
+    async payout() {
+        return await this.flightSuretyApp.methods.payout().send({from: this.account});
+    }
 }
