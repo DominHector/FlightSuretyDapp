@@ -201,7 +201,7 @@ const registerFlight = async () => {
     } catch (e) {
         error = e.message;
     }
-    display('display-wrapper-flights', [ { label: 'Submit Airline', error: error, value: flightValue} ]);
+    display('display-wrapper-flights', [ { label: 'Submit Flight', error: error, value: flightValue} ]);
 }
 
 const getFlights = async () => {
