@@ -3,7 +3,7 @@
 FlightSurety is a sample application project for Udacity's Blockchain course.
 
 
-![This is an image](./images/app.png)
+![This is an image](./images/dapp.png)
 
 ## Versions
 Node: v15.11.0<br>
