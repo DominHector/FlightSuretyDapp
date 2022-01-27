@@ -252,12 +252,19 @@ contract FlightSuretyData {
         emit PaidInsurance(_passenger, _flight, _value, _payout, true);
     }
 
+    /** @dev Get passenger flight**/
+    function getPassengerFlight(address _passenger) external view returns(bytes32) {
+        return insurances[_passenger].flight;
+    }
+
 
     /**  @dev Transfers eligible payout funds to insuree **/
     function payout(address payable _passenger) external payable {
         uint amount = insurances[_passenger].payout;
-        address payable passenger = address(uint160(_passenger));
+        require(insurances[_passenger].payout > 0, 'You have already received the compensation');
+        insurances[_passenger].payout = 0;
 
+        address payable passenger = address(uint160(_passenger));
         passenger.transfer(amount);
     }
 

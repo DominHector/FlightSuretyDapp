@@ -286,6 +286,10 @@ contract FlightSuretyApp {
 
 
     function payout () external payable requireIsOperational {
+        bytes32 flight = flightSuretyData.getPassengerFlight(msg.sender);
+
+        require(flights[flight].statusCode == 20, 'You cannot withdraw the funds for a justified cause');
+
         flightSuretyData.payout(msg.sender);
     }
 
