@@ -27,6 +27,9 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
+    uint8 private constant MINIMUM_AIRLINES_TO_VOTE = 4;
+    uint public constant FUND_AIRLINE_PRICE = 10000000000000000000;
+
     address payable contractOwner;          // Account used to deploy contract
 
     struct Flight {
@@ -84,8 +87,28 @@ contract FlightSuretyApp {
         _;
     }
 
-    modifier requireNotRegisterAirline() {
-        require(!flightSuretyData.isSubmitted(msg.sender), "Airline is already submitted");
+    modifier requireNotSubmittedAirline(address _airline) {
+        require(!flightSuretyData.isSubmitted(_airline), "Airline is already submitted");
+        _;
+    }
+
+    modifier requireIsSubmittedAirline(address _airline) {
+        require(flightSuretyData.isSubmitted(_airline), "Airline is not submitted");
+        _;
+    }
+
+    modifier requireIsRegisteredAirline() {
+        require(flightSuretyData.isRegistered(msg.sender), "Airline is not Registered");
+        _;
+    }
+
+    modifier requireAirlineIsFunded() {
+        require(flightSuretyData.isFunded(msg.sender), "Airline is not funded");
+        _;
+    }
+
+    modifier requireNotVoted(address _airline) {
+        require(!flightSuretyData.isVotedBy(_airline), "Already voted");
         _;
     }
 
@@ -132,35 +155,53 @@ contract FlightSuretyApp {
 
 
     /** @dev Add an airline*/
-    function submitAirline(address _airline) external requireNotRegisterAirline returns(address) {
+    function submitAirline(address _airline) external requireIsOperational requireNotSubmittedAirline(_airline) returns(address) {
+        require(msg.sender == _airline, "It is not your address");
         flightSuretyData.submitAirline(_airline);
         return (_airline);
     }
 
     /** @dev Vote an airline*/
-    function voteAirline(address _airline) external returns(address, address) {
+    function voteAirline(address _airline) external requireIsOperational requireAirlineIsFunded requireNotVoted(_airline) returns(address, address) {
+        if (flightSuretyData.numAirlinesFunded() < MINIMUM_AIRLINES_TO_VOTE) {
+            require(flightSuretyData.getFirstAirline() == msg.sender, "You are not the first airline");
+        } else {
+            require(_airline != msg.sender, "You can't vote for yourself");
+        }
+
         flightSuretyData.voteAirline(_airline);
         return (_airline, msg.sender);
     }
 
 
     /** @dev Add an airline to the registration queue*/
-    function registerAirline(address _airline) external returns(address, address) {
+    function registerAirline(address _airline) external requireIsOperational requireAirlineIsFunded requireIsSubmittedAirline(_airline) returns(address, address) {
+        if (flightSuretyData.numAirlinesFunded() < MINIMUM_AIRLINES_TO_VOTE) {
+            require(flightSuretyData.getFirstAirline() == msg.sender, "You are not the first airline");
+        }
+
+        if (flightSuretyData.numAirlinesFunded() >= MINIMUM_AIRLINES_TO_VOTE) {
+            uint airlinesFunded = flightSuretyData.numAirlinesFunded();
+            uint8 votes = flightSuretyData.getVotesAirline(_airline);
+            require(airlinesFunded.div(2) <= votes, "Has not passed the consensus");
+        }
+
         flightSuretyData.registerAirline(_airline);
         return (_airline, msg.sender);
     }
 
 
     /** @dev pay for registering Airline**/
-    function fundAirline() external payable requireIsOperational {
+    function fundAirline() external payable requireIsOperational requireIsRegisteredAirline {
         address payable payableAccount = address(uint160(address(flightSuretyData)));
+        require(msg.value == FUND_AIRLINE_PRICE, "Insufficient founds, 10 eth");
         payableAccount.transfer(msg.value);
         flightSuretyData.fundAirline(msg.sender);
     }
 
 
     /** @dev Get airline status**/
-    function getAirlineStatus(address _airline) external view returns(address, bool, bool, bool, uint256, uint256){
+    function getAirlineStatus(address _airline) external view returns(address, bool, bool, bool, uint256, uint256) {
         return flightSuretyData.getAirline(_airline);
     }
 
@@ -238,7 +279,7 @@ contract FlightSuretyApp {
         address payable payableAccount = address(uint160(address(flightSuretyData)));
         payableAccount.transfer(msg.value);
 
-        uint256 payout = msg.value + msg.value.div(2);
+        uint payout = msg.value + msg.value.div(2);
 
         flightSuretyData.buyInsurance(msg.sender, _flight, msg.value, payout);
     }
@@ -377,6 +418,7 @@ contract FlightSuretyApp {
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
+
 
     // Returns array of three non-duplicating integers from 0-9
     function generateIndexes

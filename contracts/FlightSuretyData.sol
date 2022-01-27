@@ -19,12 +19,13 @@ contract FlightSuretyData {
         bool isApproved;
         bool isFunded;
         uint256 regIndex;
-        uint256 votes;
+        uint8 votes;
         mapping(address => bool) votedFor;
     }
     mapping(address => Airline) private airlines;
     address[] private addressesAirlines;
     uint256 regIndexAirline;
+    uint public airlinesFundedCounter = 0;
 
 
     struct Insurance {
@@ -36,17 +37,19 @@ contract FlightSuretyData {
     }
     mapping(address => Insurance) private insurances;
 
+    mapping(address => address[]) internal votes;
 
     /********************************************************************************************/
     /*                                       EVENTS                                             */
     /********************************************************************************************/
 
     event OperationalStatusChanged(bool mode);
-    event submittedAirline(address airline, bool isSubmitted, bool isApproved, bool isFunded, uint256 regIndex, uint256 votes);
+    event submittedAirline(address airline, bool isSubmitted, bool isApproved, bool isFunded, uint256 regIndex, uint8 votes);
     event votedAirline(address airline, address sender);
     event registeredAirline(address airline, address sender, bool isApproved);
     event fundedAirline(address airline, uint value, bool isFunded);
     event PaidInsurance(address _passenger, bytes32 _flight, uint256 _value, uint _payout, bool isPaid);
+    event AirlinesFunded(uint airlinesFundedCounter);
 
 
     /**
@@ -55,7 +58,7 @@ contract FlightSuretyData {
     */
     constructor(address _airline) public payable {
         contractOwner = msg.sender;
-        airlines[_airline] = Airline(_airline, true, false, false, 0, 0);
+        airlines[_airline] = Airline(_airline, true, true, false, 0, 0);
         regIndexAirline = 0;
         addressesAirlines.push(_airline);
     }
@@ -123,9 +126,40 @@ contract FlightSuretyData {
         return address(this).balance;
     }
 
+
+    function getFlightKey(address airline, string memory flight, uint256 timestamp) public pure returns(bytes32){
+        return keccak256(abi.encodePacked(airline, flight, timestamp));
+    }
+
+
     /** @dev getting if is submitted bool **/
     function isSubmitted(address _airline) external view returns(bool) {
         return airlines[_airline].isSubmitted;
+    }
+
+    /** @dev getting if is registered bool **/
+    function isRegistered(address _airline) external view returns(bool) {
+        return airlines[_airline].isApproved;
+    }
+
+    /** @dev getting if is funded bool **/
+    function isFunded(address _airline) external view returns(bool) {
+        return airlines[_airline].isFunded;
+    }
+
+    /** @dev getting number of airlines funded **/
+    function numAirlinesFunded() external view returns(uint) {
+        return airlinesFundedCounter;
+    }
+
+    /** @dev getting first airline **/
+    function getFirstAirline() external view returns(address) {
+        return addressesAirlines[0];
+    }
+
+    /** @dev getting voted **/
+    function isVotedBy(address _airline) external view returns(bool) {
+        return airlines[_airline].votedFor[msg.sender];
     }
 
     /********************************************************************************************/
@@ -172,11 +206,13 @@ contract FlightSuretyData {
     /** @dev pay for registering Airline **/
     function fundAirline(address payable _airline) external payable requireIsOperational {
         airlines[_airline].isFunded = true;
+        airlinesFundedCounter++;
+        emit AirlinesFunded(airlinesFundedCounter);
     }
 
 
     /** @dev Get airline status**/
-    function getAirline(address _airline) external view returns(address, bool, bool, bool, uint256, uint256) {
+    function getAirline(address _airline) external view returns(address, bool, bool, bool, uint256, uint8) {
         return (
             airlines[_airline].airline,
             airlines[_airline].isSubmitted,
@@ -185,6 +221,12 @@ contract FlightSuretyData {
             airlines[_airline].regIndex,
             airlines[_airline].votes
         );
+    }
+
+
+    /** @dev getting votes airline **/
+    function getVotesAirline(address _airline) external view returns(uint8) {
+        return airlines[_airline].votes;
     }
 
 

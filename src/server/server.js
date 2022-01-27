@@ -9,8 +9,6 @@ let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('htt
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 
-let oracles = 10;
-
 let registeredOracles = [];
 let STATUS_CODES = [0, 10, 20, 30, 40, 50];
 
@@ -50,14 +48,7 @@ flightSuretyApp.events.OracleRequest({
 
 });
 
-flightSuretyApp.events.FlightStatusInfo({
-    fromBlock: 0
-}, function (error, event) {
-    console.log(event);
-    console.log(error);
-});
-
-flightSuretyData.events.PaidInsurance({
+flightSuretyData.events.votedAirline({
     fromBlock: 0
 }, function (error, event) {
     console.log(event);
