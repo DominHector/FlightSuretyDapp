@@ -8,9 +8,9 @@ FlightSurety is a sample application project for Udacity's Blockchain course.
 #### The first line (address [0]) is recorded along with the contract
 #### 1. Anyone can send an airline
 #### 2. If there are 4 or more funded airlines, the votes are taken into account for the consensus
-#### 3. Only the first airline can register other airlines sent, if there are already 4 airlines, other airlines can register other aerolines.
+#### 3. Only the first airline can register other airlines sent, if there are already 4 airlines, other airlines can register other airlines.
 #### Anyone can consult the states of the airlines.
-#### 4. Only you can fund your airline if it has been registered by consensus or by the first aeroline.
+#### 4. Only you can fund your airline if it has been registered by consensus or by the first airline.
 #### Anyone can purchase a flight, check its status and receive compensation if the correct flight status is met.
 <br>
 ## Versions
