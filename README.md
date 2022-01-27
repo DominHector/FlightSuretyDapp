@@ -12,7 +12,7 @@ FlightSurety is a sample application project for Udacity's Blockchain course.
 #### Anyone can consult the states of the airlines.
 #### 4. Only you can fund your airline if it has been registered by consensus or by the first airline.
 #### Anyone can purchase a flight, check its status and receive compensation if the correct flight status is met.
-<br>
+
 ## Versions
 Node: v15.11.0<br>
 Truffle: v5.2.4<br>
